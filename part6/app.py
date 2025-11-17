@@ -169,13 +169,14 @@ def fetch_sonnets_from_api() -> List[Dict[str, Any]]:
     """
     url = "https://poetrydb.org/author,title/Shakespeare;Sonnet"
     sonnets = {}
-    with urllib.request.urlopen(url) as response:
-        sonnets = json.load(response)
-        if RuntimeError:
-            print("Something went wrong. Please try again later. If the error persists, contact our support")
-            raise RuntimeError()
+    try:
+        with urllib.request.urlopen(url) as response:
+            return json.load(response)
 
-        return sonnets
+    except Exception:
+        raise RuntimeError("Something went wrong. Please try again later. If the error persists please contact our support. ")
+
+
 
 
 
