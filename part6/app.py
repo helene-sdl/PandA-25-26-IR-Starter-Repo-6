@@ -22,7 +22,7 @@ import time
 import urllib.request
 import urllib.error
 
-from .constants import BANNER, HELP, POETRYDB_URL
+from constants import BANNER, HELP, POETRYDB_URL
 
 
 # ---------- Search helpers (unchanged from Part 5) ----------
@@ -167,8 +167,16 @@ def fetch_sonnets_from_api() -> List[Dict[str, Any]]:
     - PoetryDB returns a list of poems.
     - You can add error handling: raise a RuntimeError (or print a helpful message) if something goes wrong.
     """
+    url = "https://poetrydb.org/author,title/Shakespeare;Sonnet"
     sonnets = {}
-    return sonnets
+    with urllib.request.urlopen(url) as response:
+        sonnets = json.load(response)
+        if RuntimeError:
+            print("Something went wrong. Please try again later. If the error persists, contact our support")
+            raise RuntimeError()
+
+        return sonnets
+
 
 
 def load_sonnets() -> List[Dict[str, Any]]:
@@ -185,6 +193,16 @@ def load_sonnets() -> List[Dict[str, Any]]:
            - Save the data (pretty-printed) to CACHE_FILENAME.
            - Return the data.
     """
+    if os.path.exists(module_relative_path("sonnets.json")):
+        print("Loaded sonnets from cache.")
+        return json.load(open(module_relative_path("sonnets.json")))
+
+    elif not os.path.isfile(module_relative_path("sonnets.json")):
+        fetch_sonnets_from_api()
+        print("Downloaded sonnets from PoetryDB.")
+        with open(module_relative_path("sonnets.json"), "w") as f:
+            json.dump(fetch_sonnets_from_api(), f, indent=2)
+            pass
 
     # Default implementation: Load from the API always
 
@@ -192,19 +210,33 @@ def load_sonnets() -> List[Dict[str, Any]]:
 
 # ---------- Config handling (carry over from Part 5) ----------
 
-DEFAULT_CONFIG = {"highlight": True, "search_mode": "AND"}
+CONFIG_DEFAULTS = {"highlight": True, "search_mode": "AND"}
 
 def load_config() -> Dict[str, Any]:
     """ToDo 0:
     Copy your working implementation from Part 5.
     """
+    if not os.path.isfile(module_relative_path("config.json")):
+        return CONFIG_DEFAULTS
+        #ensure that the final config includes all keys, missing are added from defaults
+    try:
+        with open(module_relative_path("config.json"), encoding="utf-8") as file:
+            config = json.load(file)
+        for key in CONFIG_DEFAULTS:
+            if key not in config:
+                config[key] = CONFIG_DEFAULTS[key]
+        return config
 
-    return DEFAULT_CONFIG.copy()
+    except Exception:
+        return CONFIG_DEFAULTS.copy()
+
 
 def save_config(cfg: Dict[str, Any]) -> None:
     """ToDo 0:
     Copy your working implementation from Part 5.
     """
+    with open (module_relative_path("config.json"), "w", encoding="utf-8") as file:
+        json.dump(cfg, file, indent=2, ensure_ascii=False)
     pass
 
 
@@ -216,7 +248,13 @@ def main() -> None:
 
     # Load sonnets (from cache or API)
     # ToDo 3: Time how long loading the sonnets take and print it to the console
+
+    start = time.perf_counter()
     sonnets = load_sonnets()
+    end = time.perf_counter()
+
+    elapsed = (end - start) * 1000
+    print(f"Your query took: {elapsed:.3f} [ms]")
 
     print(f"Loaded {len(sonnets)} sonnets.")
 
@@ -246,6 +284,7 @@ def main() -> None:
                     config["highlight"] = parts[1].lower() == "on"
                     print("Highlighting", "ON" if config["highlight"] else "OFF")
                     # ToDo 5: call save_config(config) here so the choice persists.
+                    save_config(config)
                 else:
                     print("Usage: :highlight on|off")
                 continue
@@ -269,6 +308,8 @@ def main() -> None:
             continue
 
         # ToDo 3: Time how the execution of the user query takes
+
+        start = time.perf_counter()
 
         # query
         combined_results = []
@@ -301,8 +342,11 @@ def main() -> None:
 
         # Initialize elapsed_ms to contain the number of milliseconds the query evaluation took
         elapsed_ms = 0
-
+        #time counter
+        end = time.perf_counter()
+        elapsed_ms = (end - start) * 1000
         print_results(raw, combined_results, bool(config.get("highlight", True)), elapsed_ms)
+
 
 
 if __name__ == "__main__":
