@@ -194,20 +194,24 @@ def load_sonnets() -> List[Dict[str, Any]]:
            - Save the data (pretty-printed) to CACHE_FILENAME.
            - Return the data.
     """
-    if os.path.exists(module_relative_path("sonnets.json")):
+    path = module_relative_path("sonnets.json")
+    if os.path.exists(path):
         print("Loaded sonnets from cache.")
-        return json.load(open(module_relative_path("sonnets.json")))
+        with open(path) as sonnets_file:
+            return json.load(sonnets_file)
 
-    elif not os.path.isfile(module_relative_path("sonnets.json")):
-        fetch_sonnets_from_api()
+    elif not os.path.isfile(path):
+        data = fetch_sonnets_from_api()
         print("Downloaded sonnets from PoetryDB.")
-        with open(module_relative_path("sonnets.json"), "w") as f:
-            json.dump(fetch_sonnets_from_api(), f, indent=2)
-            pass
+        with open(path, "w") as CACHE_FILENAME:
+            json.dump(data, CACHE_FILENAME, indent=2)
+            return data
+
+    return fetch_sonnets_from_api()
+
 
     # Default implementation: Load from the API always
 
-    return fetch_sonnets_from_api()
 
 # ---------- Config handling (carry over from Part 5) ----------
 
