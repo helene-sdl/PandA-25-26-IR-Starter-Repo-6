@@ -22,7 +22,7 @@ import time
 import urllib.request
 import urllib.error
 
-from constants import BANNER, HELP, POETRYDB_URL
+from constants import (BANNER, HELP, POETRYDB_URL, CACHE_FILENAME)
 
 
 # ---------- Search helpers (unchanged from Part 5) ----------
@@ -167,7 +167,7 @@ def fetch_sonnets_from_api() -> List[Dict[str, Any]]:
     - PoetryDB returns a list of poems.
     - You can add error handling: raise a RuntimeError (or print a helpful message) if something goes wrong.
     """
-    url = "https://poetrydb.org/author,title/Shakespeare;Sonnet"
+    url = POETRYDB_URL
     sonnets = {}
     try:
         with urllib.request.urlopen(url) as response:
@@ -175,8 +175,6 @@ def fetch_sonnets_from_api() -> List[Dict[str, Any]]:
 
     except Exception:
         raise RuntimeError("Something went wrong. Please try again later. If the error persists please contact our support. ")
-
-
 
 
 
@@ -194,20 +192,20 @@ def load_sonnets() -> List[Dict[str, Any]]:
            - Save the data (pretty-printed) to CACHE_FILENAME.
            - Return the data.
     """
-    path = module_relative_path("sonnets.json")
+    path = module_relative_path(CACHE_FILENAME)
     if os.path.exists(path):
         print("Loaded sonnets from cache.")
         with open(path) as sonnets_file:
             return json.load(sonnets_file)
 
-    elif not os.path.isfile(path):
-        data = fetch_sonnets_from_api()
-        print("Downloaded sonnets from PoetryDB.")
-        with open(path, "w") as CACHE_FILENAME:
-            json.dump(data, CACHE_FILENAME, indent=2)
-            return data
 
-    return fetch_sonnets_from_api()
+    data = fetch_sonnets_from_api()
+    print("Downloaded sonnets from PoetryDB.")
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+    return data
+
 
 
     # Default implementation: Load from the API always

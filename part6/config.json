@@ -1,4 +1,4 @@
 {
-  "highlight": true,
-  "search_mode": "AND"
+  "highlight": false,
+  "search_mode": "OR"
 }
