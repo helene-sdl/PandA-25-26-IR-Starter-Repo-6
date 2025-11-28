@@ -168,14 +168,17 @@ def fetch_sonnets_from_api() -> List[Dict[str, Any]]:
     - You can add error handling: raise a RuntimeError (or print a helpful message) if something goes wrong.
     """
     url = POETRYDB_URL
-    sonnets = {}
     try:
         with urllib.request.urlopen(url) as response:
-            return json.load(response)
+            data = json.load(response)
+        if isinstance(data, list) and all(isinstance(item, dict) for item in data):
+            return data
+        else:
+            raise RuntimeError("Unexpected data format received.")
 
     except Exception:
-        raise RuntimeError("Something went wrong. Please try again later. If the error persists please contact our support. ")
-
+        raise RuntimeError(
+            "Something went wrong. Please try again later. If the error persists, please contact our support.")
 
 
 def load_sonnets() -> List[Dict[str, Any]]:
